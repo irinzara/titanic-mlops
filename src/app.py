@@ -1,7 +1,9 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import joblib
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load the trained model
 print("🚀 Loading model...")
@@ -11,10 +13,19 @@ print("✅ Model loaded successfully!")
 # Create FastAPI app
 app = FastAPI(title="Titanic Survival Prediction API")
 
-# Define request body format
+# Enable CORS for local testing and frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all origins for testing; later restrict to your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Define request body
 class Passenger(BaseModel):
     Pclass: int
-    Sex: int  # 0 = female, 1 = male
+    Sex: int  # 0 = male, 1 = female
     Age: float
     SibSp: int
     Parch: int
@@ -23,12 +34,12 @@ class Passenger(BaseModel):
 
 @app.get("/")
 def home():
-    print("Root endpoint accessed")  # Logs every time someone hits /
+    print("Root endpoint accessed")
     return {"message": "Titanic Survival Prediction API is running!"}
 
 @app.post("/predict")
 def predict_survival(passenger: Passenger):
-    print(f"Received request: {passenger}")  # Logs incoming data
+    print(f"Received request: {passenger}")
 
     # Convert input into numpy array
     data = np.array([[passenger.Pclass, passenger.Sex, passenger.Age, passenger.SibSp,
@@ -38,5 +49,5 @@ def predict_survival(passenger: Passenger):
     prediction = model.predict(data)[0]
     survival = "Survived" if prediction == 1 else "Did Not Survive"
     
-    print(f"Prediction: {prediction} ({survival})")  # Logs prediction
+    print(f"Prediction: {prediction} ({survival})")
     return {"prediction": int(prediction), "survival_status": survival}

@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
 import numpy as np
-from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
 # Load the trained model
 print("🚀 Loading model...")
@@ -33,9 +34,9 @@ class Passenger(BaseModel):
     Embarked: int  # 0 = C, 1 = Q, 2 = S
 
 @app.get("/")
-def home():
-    print("Root endpoint accessed")
-    return {"message": "Titanic Survival Prediction API is running!"}
+def serve_frontend():
+    index_path = Path(__file__).parent / "static" / "index.html"
+    return FileResponse(index_path)
 
 @app.post("/predict")
 def predict_survival(passenger: Passenger):
